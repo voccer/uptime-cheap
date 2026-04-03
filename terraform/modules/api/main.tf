@@ -1,13 +1,6 @@
 resource "aws_apigatewayv2_api" "main" {
   name          = "${var.prefix}-api"
   protocol_type = "HTTP"
-
-  cors_configuration {
-    allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
-    allow_headers = ["Content-Type"]
-    max_age       = 300
-  }
 }
 
 resource "aws_apigatewayv2_stage" "default" {

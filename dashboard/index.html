@@ -4,10 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Site Monitor</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
+    :root, [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: rgba(0,0,0,0.04);
+      --surface-hover: rgba(0,0,0,0.07);
+      --border: rgba(0,0,0,0.08);
+      --border-hover: rgba(0,0,0,0.16);
+      --text: #1e293b;
+      --muted: rgba(0,0,0,0.4);
+      --green: #16a34a;
+      --red: #dc2626;
+      --accent: #6366f1;
+      --accent-dim: rgba(99,102,241,0.1);
+    }
+
+    [data-theme="dark"] {
       --bg: #07070f;
       --surface: rgba(255,255,255,0.04);
       --surface-hover: rgba(255,255,255,0.07);
@@ -34,10 +49,16 @@
       position: fixed;
       inset: 0;
       background:
-        radial-gradient(ellipse 60% 40% at 10% 0%, rgba(129,140,248,0.12) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 90% 100%, rgba(34,197,94,0.08) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 40% at 10% 0%, rgba(99,102,241,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 100%, rgba(22,163,74,0.06) 0%, transparent 60%);
       pointer-events: none;
       z-index: 0;
+    }
+
+    [data-theme="dark"] body::before {
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 0%, rgba(129,140,248,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 100%, rgba(34,197,94,0.08) 0%, transparent 60%);
     }
 
     /* ─── Header ─────────────────────────────────── */
@@ -45,7 +66,7 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(7,7,15,0.75);
+      background: rgba(248,250,252,0.85);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
       padding: 0 32px;
@@ -53,6 +74,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+    }
+
+    [data-theme="dark"] header {
+      background: rgba(7,7,15,0.75);
     }
 
     .logo {
@@ -73,11 +98,39 @@
 
     .logo-text {
       font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #1e293b 40%, #6366f1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    [data-theme="dark"] .logo-text {
       background: linear-gradient(135deg, #e2e8f0 40%, #a5b4fc);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
 
     .header-right { display: flex; align-items: center; gap: 16px; }
+
+    /* ─── Theme Toggle ─────────────────────────────── */
+    .theme-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; user-select: none;
+      padding: 4px 8px; border-radius: 20px;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover { background: var(--surface-hover); }
+    .theme-toggle-track {
+      width: 40px; height: 22px; border-radius: 11px;
+      background: #cbd5e1;
+      position: relative; transition: background 0.25s;
+    }
+    .theme-toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      transition: transform 0.25s;
+    }
+    .theme-toggle-track.dark { background: var(--accent); }
+    .theme-toggle-track.dark .theme-toggle-thumb { transform: translateX(18px); }
+    .theme-icon { font-size: 16px; line-height: 1; }
 
     .overall-badge {
       display: flex; align-items: center; gap: 6px;
@@ -190,7 +243,7 @@
       transition: border-color 0.2s;
     }
     .add-bar select:focus { border-color: var(--accent); }
-    .add-bar select option { background: #1e1e30; }
+    .add-bar select option { background: #f8fafc; }
 
     .btn-add {
       padding: 9px 20px; background: var(--accent); color: #fff;
@@ -291,7 +344,7 @@
     .beat-tip {
       display: none; position: absolute; bottom: calc(100% + 8px);
       left: 50%; transform: translateX(-50%);
-      background: #1e1e30; border: 1px solid var(--border-hover);
+      background: #f8fafc; border: 1px solid var(--border-hover);
       border-radius: 8px; padding: 7px 10px;
       font-size: 11px; white-space: nowrap; z-index: 20;
       pointer-events: none; color: var(--text); line-height: 1.6;
@@ -309,7 +362,7 @@
     }
     .spinner {
       width: 36px; height: 36px;
-      border: 3px solid rgba(255,255,255,0.08); border-top-color: var(--accent);
+      border: 3px solid rgba(0,0,0,0.08); border-top-color: var(--accent);
       border-radius: 50%; animation: spin 0.8s linear infinite;
       margin: 0 auto 16px;
     }
@@ -323,6 +376,22 @@
     @keyframes ripple  { 0% { opacity: 0.6; transform: scale(0.6); } 100% { opacity: 0; transform: scale(1); } }
     @keyframes fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     .site-card { animation: fadeIn 0.3s ease both; }
+
+    /* ─── Footer ─────────────────────────────────── */
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -337,6 +406,12 @@
     <span class="logo-text">Site Monitor</span>
   </div>
   <div class="header-right">
+    <div class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+      <span class="theme-icon" id="theme-icon">☀️</span>
+      <div class="theme-toggle-track" id="theme-track">
+        <div class="theme-toggle-thumb"></div>
+      </div>
+    </div>
     <div id="overall-badge" class="overall-badge up">
       <div class="dot"></div>
       <span id="overall-text">All systems operational</span>
@@ -348,9 +423,24 @@
 
 <main id="main"></main>
 
+<footer id="footer">
+  <span>© 2026 <a href="https://pionero.io" target="_blank" rel="noopener">Pionero</a></span>
+</footer>
+
 <script>
   const API = '__API_URL__';
   const $ = id => document.getElementById(id);
+
+  // ── Theme ────────────────────────────────────────
+  const getTheme    = () => localStorage.getItem('sm_theme') || 'light';
+  const saveTheme   = t  => { localStorage.setItem('sm_theme', t); applyTheme(t); };
+  const applyTheme  = t  => {
+    document.documentElement.dataset.theme = t;
+    $('theme-icon').textContent  = t === 'dark' ? '🌙' : '☀️';
+    $('theme-track').className   = 'theme-toggle-track' + (t === 'dark' ? ' dark' : '');
+  };
+  const toggleTheme = () => saveTheme(getTheme() === 'dark' ? 'light' : 'dark');
+  applyTheme(getTheme());
 
   // ── Auth state ──────────────────────────────────
   let adminToken = localStorage.getItem('sm_token') || null;
@@ -368,7 +458,7 @@
   const logout = () => {
     adminToken = null;
     localStorage.removeItem('sm_token');
-    goAdmin();
+    location.hash = ''; // redirect to public page
   };
 
   const route = () => {
@@ -383,12 +473,25 @@
 
   const renderHeaderNav = () => {
     const nav = $('header-nav');
+    nav.innerHTML = '';
     if (isAdminRoute() && isLoggedIn()) {
-      nav.innerHTML = `<button class="btn-link" onclick="logout()">Logout</button>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn-link';
+      btn.textContent = 'Logout';
+      btn.onclick = logout;
+      nav.appendChild(btn);
     } else if (isAdminRoute()) {
-      nav.innerHTML = `<button class="btn-link" onclick="goPublic()">← Status</button>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn-link';
+      btn.textContent = '← Status';
+      btn.onclick = goPublic;
+      nav.appendChild(btn);
     } else {
-      nav.innerHTML = `<button class="btn-link" onclick="goAdmin()">Admin →</button>`;
+      const btn = document.createElement('button');
+      btn.className = 'btn-link';
+      btn.textContent = 'Admin →';
+      btn.onclick = goAdmin;
+      nav.appendChild(btn);
     }
   };
 

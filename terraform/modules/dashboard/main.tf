@@ -48,3 +48,11 @@ resource "aws_s3_object" "index" {
   content_type = "text/html"
   depends_on   = [aws_s3_bucket_policy.dashboard]
 }
+
+resource "aws_s3_object" "favicon" {
+  bucket = aws_s3_bucket.dashboard.id
+  key    = "favicon.ico"
+  source = "${path.root}/../dashboard/favicon.ico"
+  content_type = "image/x-icon"
+  depends_on   = [aws_s3_bucket_policy.dashboard]
+}
