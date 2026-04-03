@@ -73,8 +73,8 @@ resource "aws_lambda_function" "checker" {
   tags = { Project = var.prefix }
 }
 
-resource "aws_lambda_function" "api" {
-  function_name    = "${var.prefix}-api"
+resource "aws_lambda_function" "api_lambda" {
+  function_name    = "${var.prefix}-api-lambda"
   role             = aws_iam_role.lambda.arn
   runtime          = "nodejs22.x"
   handler          = "handler.lambda_handler"
@@ -96,7 +96,7 @@ resource "aws_lambda_function" "api" {
 
 # ─── EventBridge ──────────────────────────────────────────────────────────────
 resource "aws_cloudwatch_event_rule" "checker" {
-  name                = "${var.prefix}-every-minute"
+  name                = "${var.prefix}-checker-scheduler"
   schedule_expression = "rate(1 minute)"
   description         = "Trigger checker Lambda every minute (checks 3× at 20s intervals)"
 }

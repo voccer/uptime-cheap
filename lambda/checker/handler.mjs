@@ -40,10 +40,11 @@ const saveBeat = async (siteId, ok, latency, statusCode) => {
 };
 
 const notifySlack = async (site, status) => {
-  if (!SLACK_WEBHOOK) return;
+  const webhook = site.slack_webhook || SLACK_WEBHOOK;
+  if (!webhook) return;
   const isDown = status === "DOWN";
   try {
-    await fetch(SLACK_WEBHOOK, {
+    await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

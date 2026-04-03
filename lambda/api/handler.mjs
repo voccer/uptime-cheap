@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand, PutCommand, UpdateCommand, DeleteCommand, QueryCommand, BatchWriteCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "crypto";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -45,12 +45,15 @@ const createSite = async body => {
     check_interval_minutes: interval,
     created_at: new Date().toISOString(),
   };
+  if (body.slack_webhook && body.slack_webhook.trim()) {
+    item.slack_webhook = body.slack_webhook.trim();
+  }
   await ddb.send(new PutCommand({ TableName: SITES_TABLE, Item: item }));
   return resp(201, item);
 };
 
 const updateSite = async (siteId, body) => {
-  const allowed = ["name", "url", "paused", "check_interval_minutes"];
+  const allowed = ["name", "url", "paused", "check_interval_minutes", "slack_webhook"];
   if (!allowed.some(k => k in body))
     return resp(400, { error: `Provide at least one of: ${allowed.join(", ")}` });
 
@@ -78,6 +81,14 @@ const updateSite = async (siteId, body) => {
       return resp(400, { error: `check_interval_minutes must be one of ${[...ALLOWED_INTERVALS]}` });
     names["#ci"] = "check_interval_minutes"; vals[":ci"] = iv; parts.push("#ci = :ci");
   }
+  if ("slack_webhook" in body) {
+    const webhook = (body.slack_webhook ?? "").trim();
+    if (webhook) {
+      names["#sw"] = "slack_webhook"; vals[":sw"] = webhook; parts.push("#sw = :sw");
+    } else {
+      parts.push("REMOVE slack_webhook");
+    }
+  }
 
   try {
     const out = await ddb.send(new UpdateCommand({
@@ -97,8 +108,30 @@ const updateSite = async (siteId, body) => {
 };
 
 const deleteSite = async siteId => {
+  // Delete site from sites table
   await ddb.send(new DeleteCommand({ TableName: SITES_TABLE, Key: { site_id: siteId } }));
-  return resp(200, { deleted: siteId });
+
+  // Delete all beats for this site from beats table
+  const { Items: beats = [] } = await ddb.send(new QueryCommand({
+    TableName: BEATS_TABLE,
+    KeyConditionExpression: "site_id = :sid",
+    ExpressionAttributeValues: { ":sid": siteId },
+    ProjectionExpression: "site_id, timestamp",
+  }));
+
+  // Batch delete beats (max 25 per batch)
+  for (let i = 0; i < beats.length; i += 25) {
+    const batch = beats.slice(i, i + 25);
+    await ddb.send(new BatchWriteCommand({
+      RequestItems: {
+        [BEATS_TABLE]: batch.map(item => ({
+          DeleteRequest: { Key: { site_id: item.site_id, timestamp: item.timestamp } },
+        })),
+      },
+    }));
+  }
+
+  return resp(200, { deleted: siteId, beatsDeleted: beats.length });
 };
 
 const getBeats = async siteId => {

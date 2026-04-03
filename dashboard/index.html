@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Site Monitor</title>
+  <title>Pionero Service Monitor</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon" />
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,6 +42,8 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       min-height: 100vh;
       line-height: 1.5;
+      display: flex;
+      flex-direction: column;
     }
 
     body::before {
@@ -158,8 +160,9 @@
     /* ─── Main ─────────────────────────────────── */
     main {
       position: relative; z-index: 1;
-      max-width: 900px; margin: 0 auto;
-      padding: 40px 24px 80px;
+      max-width: 1200px; width: 100%; margin: 0 auto;
+      padding: 40px 32px 80px;
+      flex: 1;
     }
 
     /* ─── Login ─────────────────────────────────── */
@@ -385,13 +388,107 @@
       font-size: 12px;
       color: var(--muted);
       border-top: 1px solid var(--border);
-      margin-top: 40px;
+      flex-shrink: 0;
     }
     footer a {
       color: var(--accent);
       text-decoration: none;
     }
     footer a:hover { text-decoration: underline; }
+
+    /* ─── Refresh Rate Selector ───────────────────── */
+    .refresh-selector {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+    }
+    .refresh-selector select {
+      padding: 4px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    .refresh-selector select:focus { border-color: var(--accent); }
+
+    /* ─── Responsive ─────────────────────────────── */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      header {
+        padding: 0 16px;
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--bg);
+        backdrop-filter: none;
+      }
+      .header-right {
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .logo-text { font-size: 15px; }
+      .overall-badge { padding: 4px 10px; font-size: 11px; }
+      .refresh-label { display: none; }
+
+      main {
+        padding: 20px 16px 80px;
+        overflow-x: hidden;
+      }
+
+      .site-card { padding: 16px; }
+      .card-top { flex-wrap: wrap; gap: 12px; }
+      .site-name { font-size: 17px; }
+      .site-url { font-size: 13px; }
+      .card-stats {
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .stat strong { font-size: 16px; }
+
+      .add-bar {
+        flex-wrap: wrap;
+      }
+      .add-bar input, .add-bar select, .add-bar .btn-add {
+        width: 100%;
+        flex: none;
+      }
+      .add-bar select { width: 100%; }
+
+      .login-card { padding: 24px; margin: 0 16px; }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: var(--bg);
+        border-top: 1px solid var(--border);
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .card-right { gap: 8px; }
+      .status-pill { font-size: 10px; padding: 2px 8px; }
+      .btn-pause { font-size: 12px; }
+      .heartbeat { height: 28px; }
+    }
   </style>
 </head>
 <body>
@@ -417,6 +514,15 @@
       <span id="overall-text">All systems operational</span>
     </div>
     <span class="refresh-label" id="refresh-label">—</span>
+    <div class="refresh-selector">
+      <select id="refresh-rate">
+        <option value="10000">10s</option>
+        <option value="30000" selected>30s</option>
+        <option value="60000">1m</option>
+        <option value="120000">2m</option>
+        <option value="300000">5m</option>
+      </select>
+    </div>
     <span id="header-nav"></span>
   </div>
 </header>
@@ -611,8 +717,21 @@
 
   // ── Auto-refresh ─────────────────────────────────
   let refreshTimer = null;
+  const getRefreshRate = () => parseInt(localStorage.getItem('sm_refresh_rate') || '30000', 10);
+  const setRefreshRate = rate => {
+    localStorage.setItem('sm_refresh_rate', rate);
+    $('refresh-rate').value = rate;
+    if (currentRefreshFn) startAutoRefresh(currentRefreshFn);
+  };
+  let currentRefreshFn = null;
+  $('refresh-rate').value = getRefreshRate(); // init after functions are defined
+  $('refresh-rate').addEventListener('change', e => setRefreshRate(e.target.value));
   const stopAutoRefresh  = () => { clearInterval(refreshTimer); refreshTimer = null; };
-  const startAutoRefresh = fn => { stopAutoRefresh(); refreshTimer = setInterval(fn, 30_000); };
+  const startAutoRefresh = fn => {
+    currentRefreshFn = fn;
+    stopAutoRefresh();
+    refreshTimer = setInterval(fn, getRefreshRate());
+  };
 
   // ── PUBLIC view ──────────────────────────────────
   const renderPublic = async () => {
@@ -729,6 +848,7 @@
         <div class="add-bar">
           <input id="inp-name" type="text" placeholder="Name  (e.g. My App)" />
           <input id="inp-url"  type="text" placeholder="URL  (e.g. https://example.com)" />
+          <input id="inp-webhook" type="text" placeholder="Slack Webhook URL (optional)" />
           <select id="inp-interval" title="Check interval">
             <option value="1">Every 1 min</option>
             <option value="2">Every 2 min</option>
@@ -748,6 +868,7 @@
 
       $('inp-name').addEventListener('keydown', e => { if (e.key === 'Enter') addSite(); });
       $('inp-url').addEventListener('keydown',  e => { if (e.key === 'Enter') addSite(); });
+      $('inp-webhook').addEventListener('keydown',  e => { if (e.key === 'Enter') addSite(); });
     } catch (e) {
       $('main').innerHTML = `<div class="error-state"><div class="empty-icon">⚠️</div><p>Cannot reach API</p><p class="error-detail">${e.message}</p></div>`;
     }
@@ -757,13 +878,17 @@
   const addSite = async () => {
     const name     = $('inp-name').value.trim();
     const url      = $('inp-url').value.trim();
+    const webhook  = $('inp-webhook').value.trim();
     const interval = parseInt($('inp-interval').value, 10);
     if (!name || !url) { $('inp-name').focus(); return; }
+
+    const body = { name, url, check_interval_minutes: interval };
+    if (webhook) body.slack_webhook = webhook;
 
     await api('/sites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, url, check_interval_minutes: interval }),
+      body: JSON.stringify(body),
     });
     loadAdmin();
   };

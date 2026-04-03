@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "dashboard" {
-  bucket = "${var.prefix}-dashboard-${data.aws_caller_identity.current.account_id}"
+  bucket = "${var.prefix}-dashboard"
   tags   = { Project = var.prefix }
 }
 
