@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(AWS_PROFILE=aws-voccer terraform state list)",
+      "Bash(AWS_PROFILE=aws-voccer terraform apply:*)",
+      "Bash(AWS_PROFILE=aws-voccer terraform output:*)",
+      "Bash(curl -s https://k0kzsftzkb.execute-api.ap-northeast-1.amazonaws.com/sites)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -X POST https://k0kzsftzkb.execute-api.ap-northeast-1.amazonaws.com/sites -H 'Content-Type: application/json' -H 'Authorization: Bearer admin123' -d '{\"name\":\"GitHub\",\"url\":\"https://github.com\",\"check_interval_minutes\":1}')",
+      "Bash(curl -s https://k0kzsftzkb.execute-api.ap-northeast-1.amazonaws.com/sites/18af3ee5/beats)",
+      "Bash(curl -s -X PATCH https://k0kzsftzkb.execute-api.ap-northeast-1.amazonaws.com/sites/18af3ee5 -H 'Content-Type: application/json' -H 'Authorization: Bearer admin123' -d '{\"paused\":true}')",
+      "Bash(AWS_PROFILE=aws-voccer aws s3 cp s3://site-monitor-dashboard-677930909572/index.html -)",
+      "Bash(curl -s \"http://site-monitor-dashboard-677930909572.s3-website-ap-northeast-1.amazonaws.com\")",
+      "Bash(make deploy:*)",
+      "Bash(rm -rf .terraform.lock.hcl .terraform terraform.tfstate terraform.tfstate.backup)",
+      "Bash(export AWS_PROFILE=pionero)",
+      "Bash(terraform init:*)",
+      "Bash(terraform plan:*)",
+      "Bash(terraform apply:*)"
+    ]
+  }
+}

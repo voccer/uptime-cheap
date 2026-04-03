@@ -1,0 +1,6 @@
+terraform/main.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/.builds/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
