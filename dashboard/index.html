@@ -946,7 +946,9 @@
 
   // ── Edit modal ───────────────────────────────────
   let editSiteId = null;
-  const openEditModal = site => {
+  const openEditModal = siteId => {
+    const site = allSites.find(s => s.site_id === siteId);
+    if (!site) return;
     editSiteId = site.site_id;
     $('edit-name').value = site.name;
     $('edit-url').value = site.url;
