@@ -119,7 +119,8 @@ const deleteSite = async siteId => {
       TableName: BEATS_TABLE,
       KeyConditionExpression: "site_id = :sid",
       ExpressionAttributeValues: { ":sid": siteId },
-      ProjectionExpression: "site_id, timestamp",
+      ProjectionExpression: "site_id, #ts",
+      ExpressionAttributeNames: { "#ts": "timestamp" },
       ExclusiveStartKey: lastEvaluatedKey,
     }));
 
