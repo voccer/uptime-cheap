@@ -905,7 +905,7 @@
   const delSite = async id => {
     if (!confirm('Remove this monitor?')) return;
     await api(`/sites/${id}`, { method: 'DELETE' });
-    loadAdmin();
+    if (currentRefreshFn) currentRefreshFn();
   };
 </script>
 </body>

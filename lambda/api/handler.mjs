@@ -111,27 +111,35 @@ const deleteSite = async siteId => {
   // Delete site from sites table
   await ddb.send(new DeleteCommand({ TableName: SITES_TABLE, Key: { site_id: siteId } }));
 
-  // Delete all beats for this site from beats table
-  const { Items: beats = [] } = await ddb.send(new QueryCommand({
-    TableName: BEATS_TABLE,
-    KeyConditionExpression: "site_id = :sid",
-    ExpressionAttributeValues: { ":sid": siteId },
-    ProjectionExpression: "site_id, timestamp",
-  }));
-
-  // Batch delete beats (max 25 per batch)
-  for (let i = 0; i < beats.length; i += 25) {
-    const batch = beats.slice(i, i + 25);
-    await ddb.send(new BatchWriteCommand({
-      RequestItems: {
-        [BEATS_TABLE]: batch.map(item => ({
-          DeleteRequest: { Key: { site_id: item.site_id, timestamp: item.timestamp } },
-        })),
-      },
+  // Delete all beats for this site (with pagination)
+  let totalDeleted = 0;
+  let lastEvaluatedKey = undefined;
+  do {
+    const { Items: beats = [], LastEvaluatedKey } = await ddb.send(new QueryCommand({
+      TableName: BEATS_TABLE,
+      KeyConditionExpression: "site_id = :sid",
+      ExpressionAttributeValues: { ":sid": siteId },
+      ProjectionExpression: "site_id, timestamp",
+      ExclusiveStartKey: lastEvaluatedKey,
     }));
-  }
 
-  return resp(200, { deleted: siteId, beatsDeleted: beats.length });
+    if (beats.length > 0) {
+      for (let i = 0; i < beats.length; i += 25) {
+        const batch = beats.slice(i, i + 25);
+        await ddb.send(new BatchWriteCommand({
+          RequestItems: {
+            [BEATS_TABLE]: batch.map(item => ({
+              DeleteRequest: { Key: { site_id: item.site_id, timestamp: item.timestamp } },
+            })),
+          },
+        }));
+      }
+      totalDeleted += beats.length;
+    }
+    lastEvaluatedKey = LastEvaluatedKey;
+  } while (lastEvaluatedKey);
+
+  return resp(200, { deleted: siteId, beatsDeleted: totalDeleted });
 };
 
 const getBeats = async siteId => {
