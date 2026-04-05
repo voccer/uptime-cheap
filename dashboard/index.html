@@ -346,6 +346,8 @@
       height: 36px; overflow: hidden;
     }
 
+    .heartbeat { display: flex; gap: 2px; align-items: flex-end; height: 36px; }
+
     .beat { flex: 1; border-radius: 2px; cursor: pointer; position: relative; transition: opacity 0.15s, transform 0.15s; }
     .beat.b-up      { background: var(--green); opacity: 0.75; }
     .beat.b-down    { background: var(--red);   opacity: 0.9; }
@@ -355,10 +357,11 @@
     .beat-tip {
       display: none; position: absolute; bottom: calc(100% + 8px);
       left: 50%; transform: translateX(-50%);
-      background: #f8fafc; border: 1px solid var(--border-hover);
+      background: var(--bg); border: 1px solid var(--border-hover);
       border-radius: 8px; padding: 7px 10px;
-      font-size: 11px; white-space: nowrap; z-index: 20;
+      font-size: 11px; white-space: nowrap; z-index: 9999;
       pointer-events: none; color: var(--text); line-height: 1.6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .beat:hover .beat-tip { display: block; }
 
@@ -685,7 +688,7 @@
     const h = !b.ok ? 34 : !latMs ? 22 : Math.min(34, Math.max(14, 14 + latMs / 25));
     const tip = b.ok
       ? `${fmt(b.timestamp)}<br>${latMs != null ? latMs + ' ms' : '—'}`
-      : `${fmt(b.timestamp)}<br>DOWN`;
+      : `${fmt(b.timestamp)}<br>DOWN · ${latMs != null ? latMs + ' ms' : '—'}`;
     return `<div class="beat ${b.ok ? 'b-up' : 'b-down'}" style="height:${h}px"><div class="beat-tip">${tip}</div></div>`;
   };
 
