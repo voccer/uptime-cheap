@@ -68,6 +68,7 @@ resource "aws_lambda_function" "checker" {
       BEATS_TABLE       = var.beats_table_name
       SLACK_WEBHOOK_URL = var.slack_webhook_url
       BEATS_TTL_SECONDS = var.beats_ttl_seconds
+      DASHBOARD_URL     = "http://${var.prefix}-dashboard.s3-website.ap-northeast-1.amazonaws.com"
     }
   }
 

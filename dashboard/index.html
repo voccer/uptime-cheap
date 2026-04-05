@@ -415,29 +415,33 @@
 
     /* ─── Edit Modal ──────────────────────────────── */
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
       display: flex; align-items: center; justify-content: center;
       z-index: 1000;
+      backdrop-filter: blur(2px);
     }
     .modal-overlay.hidden { display: none; }
     .modal-card {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 24px; min-width: 320px; max-width: 90vw;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+      border-radius: 12px; padding: 24px; min-width: 380px; max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    .modal-card h3 { margin: 0 0 16px; font-size: 16px; }
+    .modal-card h3 { margin: 0 0 20px; font-size: 18px; font-weight: 600; }
     .modal-card label {
-      display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px;
+      display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
     .modal-card input, .modal-card select {
-      width: 100%; padding: 8px 12px; margin-bottom: 12px;
+      width: 100%; padding: 10px 14px; margin-bottom: 16px;
       background: var(--bg); border: 1px solid var(--border);
-      border-radius: 6px; color: var(--text); font-size: 14px; box-sizing: border-box;
+      border-radius: 8px; color: var(--text); font-size: 14px; box-sizing: border-box;
     }
-    .modal-card input:focus, .modal-card select:focus { outline: none; border-color: var(--accent); }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-    .btn-save { padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .btn-cancel { padding: 8px 16px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .modal-card input:focus, .modal-card select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .btn-save { padding: 10px 20px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .btn-save:hover { opacity: 0.9; }
+    .btn-cancel { padding: 10px 20px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .btn-cancel:hover { border-color: var(--muted); color: var(--text); }
 
     /* ─── Responsive ─────────────────────────────── */
     @media (max-width: 768px) {
@@ -752,6 +756,7 @@
     if (currentRefreshFn) startAutoRefresh(currentRefreshFn);
   };
   let currentRefreshFn = null;
+  let allSites = [];
   $('refresh-rate').value = getRefreshRate(); // init after functions are defined
   $('refresh-rate').addEventListener('change', e => setRefreshRate(e.target.value));
   const stopAutoRefresh  = () => { clearInterval(refreshTimer); refreshTimer = null; };
@@ -760,6 +765,7 @@
     stopAutoRefresh();
     refreshTimer = setInterval(fn, getRefreshRate());
   };
+  const refreshNow = () => { if (currentRefreshFn) currentRefreshFn(); };
 
   // ── PUBLIC view ──────────────────────────────────
   const renderPublic = async () => {
@@ -864,6 +870,7 @@
       const data = await loadData();
       if (!data) return;
       const { sites, beatsAll } = data;
+      allSites = sites;
 
       updateBadge(sites);
       $('refresh-label').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
