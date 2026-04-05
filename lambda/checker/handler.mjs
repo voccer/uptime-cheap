@@ -43,21 +43,13 @@ const notifySlack = async (site, status) => {
   const webhook = site.slack_webhook || SLACK_WEBHOOK;
   if (!webhook) return;
   const isDown = status === "DOWN";
+  const dashboardUrl = process.env.DASHBOARD_URL || "";
   try {
     await fetch(webhook, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        attachments: [{
-          color: isDown ? "#ef4444" : "#22c55e",
-          blocks: [
-            { type: "section", text: { type: "mrkdwn", text: `${isDown ? "🔴" : "✅"} *${site.name}* is *${status}*` } },
-            { type: "section", fields: [
-              { type: "mrkdwn", text: `*URL:*\n${site.url}` },
-              { type: "mrkdwn", text: `*Time:*\n${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC` },
-            ]},
-          ],
-        }],
+        text: `${isDown ? "🔴" : "✅"} *<${site.url}|${site.name}>* is *${status}* | <${dashboardUrl}|[Status]>`,
       }),
     });
   } catch {}
@@ -77,14 +69,19 @@ const updateState = async (site, ok) => {
   const vals = { ":ok": consecOk, ":fail": consecFail, ":status": newStatus, ":lca": now };
   if (newStatus !== currentStatus) { expr += ", last_changed_at = :changed"; vals[":changed"] = now; }
 
-  await ddb.send(new UpdateCommand({
-    TableName: SITES_TABLE,
-    Key: { site_id: site.site_id },
-    UpdateExpression: expr,
-    ExpressionAttributeValues: vals,
-    ExpressionAttributeNames: { "#st": "status" },
-    ConditionExpression: "attribute_exists(site_id)",
-  }));
+  try {
+    await ddb.send(new UpdateCommand({
+      TableName: SITES_TABLE,
+      Key: { site_id: site.site_id },
+      UpdateExpression: expr,
+      ExpressionAttributeValues: vals,
+      ExpressionAttributeNames: { "#st": "status" },
+      ConditionExpression: "attribute_exists(site_id)",
+    }));
+  } catch (e) {
+    if (e.name === "ConditionalCheckFailedException") return;  // site was deleted, skip
+    throw e;
+  }
 
   site.status = newStatus;
   site.consecutive_ok = consecOk;
