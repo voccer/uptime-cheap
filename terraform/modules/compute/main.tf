@@ -67,6 +67,7 @@ resource "aws_lambda_function" "checker" {
       SITES_TABLE       = var.sites_table_name
       BEATS_TABLE       = var.beats_table_name
       SLACK_WEBHOOK_URL = var.slack_webhook_url
+      BEATS_TTL_SECONDS = var.beats_ttl_seconds
     }
   }
 

@@ -33,7 +33,7 @@ const saveBeat = async (siteId, ok, latency, statusCode) => {
     timestamp: now.toISOString(),
     ok,
     status_code: statusCode,
-    ttl: Math.floor(now / 1000) + 7 * 86400,
+    ttl: Math.floor(now / 1000) + (Number(process.env.BEATS_TTL_SECONDS) || 18000),
   };
   if (latency != null) item.latency_ms = latency;
   await ddb.send(new PutCommand({ TableName: BEATS_TABLE, Item: item }));

@@ -12,6 +12,7 @@ module "compute" {
   beats_table_arn   = module.storage.beats_table_arn
   slack_webhook_url = var.slack_webhook_url
   admin_token       = var.admin_token
+  beats_ttl_seconds = var.beats_ttl_seconds
 }
 
 module "api" {

@@ -19,3 +19,9 @@ variable "admin_token" {
   sensitive   = true
   default     = ""
 }
+
+variable "beats_ttl_seconds" {
+  description = "TTL for beat records in seconds (default: 18000 = 5 hours)"
+  type        = number
+  default     = 18000
+}
