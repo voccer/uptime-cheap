@@ -897,6 +897,7 @@
           <input id="inp-name" type="text" placeholder="Name  (e.g. My App)" />
           <input id="inp-url"  type="text" placeholder="URL  (e.g. https://example.com)" />
           <input id="inp-webhook" type="text" placeholder="Slack Webhook URL (optional)" />
+          <input id="inp-order" type="number" placeholder="Order" style="max-width:80px" />
           <select id="inp-interval" title="Check interval">
             <option value="1">Every 1 min</option>
             <option value="2">Every 2 min</option>
@@ -928,9 +929,10 @@
     const url      = $('inp-url').value.trim();
     const webhook  = $('inp-webhook').value.trim();
     const interval = parseInt($('inp-interval').value, 10);
+    const orderNo  = parseInt($('inp-order').value, 10) || 999;
     if (!name || !url) { $('inp-name').focus(); return; }
 
-    const body = { name, url, check_interval_minutes: interval };
+    const body = { name, url, check_interval_minutes: interval, order_no: orderNo };
     if (webhook) body.slack_webhook = webhook;
 
     await api('/sites', {
@@ -967,6 +969,7 @@
     $('edit-url').value = site.url;
     $('edit-webhook').value = site.slack_webhook || '';
     $('edit-interval').value = site.check_interval_minutes || 1;
+    $('edit-order').value = site.order_no ?? 999;
     $('edit-modal').classList.remove('hidden');
   };
   const closeEditModal = () => {
@@ -979,9 +982,10 @@
     const url      = $('edit-url').value.trim();
     const webhook  = $('edit-webhook').value.trim();
     const interval = parseInt($('edit-interval').value, 10);
+    const orderNo  = parseInt($('edit-order').value, 10) || 999;
     if (!name || !url) return;
 
-    const body = { name, url, check_interval_minutes: interval };
+    const body = { name, url, check_interval_minutes: interval, order_no: orderNo };
     if (webhook) body.slack_webhook = webhook;
     else body.slack_webhook = null;  // allow clearing webhook
 
@@ -1014,6 +1018,8 @@
       <option value="30">Every 30 min</option>
       <option value="60">Every 60 min</option>
     </select>
+    <label>Order</label>
+    <input id="edit-order" type="number" placeholder="Display order (lower = first)" />
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
       <button class="btn-save" onclick="saveEdit()">Save</button>

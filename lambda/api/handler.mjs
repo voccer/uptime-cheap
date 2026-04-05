@@ -27,7 +27,7 @@ const resp = (statusCode, body) => ({
 
 const getSites = async () => {
   const { Items = [] } = await ddb.send(new ScanCommand({ TableName: SITES_TABLE }));
-  Items.sort((a, b) => (a.name ?? "").toLowerCase().localeCompare((b.name ?? "").toLowerCase()));
+  Items.sort((a, b) => (a.order_no ?? 999) - (b.order_no ?? 999));
   return resp(200, Items);
 };
 
@@ -44,6 +44,7 @@ const createSite = async body => {
     paused: false,
     check_interval_minutes: interval,
     created_at: new Date().toISOString(),
+    order_no: Number(body.order_no ?? 999),
   };
   if (body.slack_webhook && body.slack_webhook.trim()) {
     item.slack_webhook = body.slack_webhook.trim();
@@ -53,7 +54,7 @@ const createSite = async body => {
 };
 
 const updateSite = async (siteId, body) => {
-  const allowed = ["name", "url", "paused", "check_interval_minutes", "slack_webhook"];
+  const allowed = ["name", "url", "paused", "check_interval_minutes", "slack_webhook", "order_no"];
   if (!allowed.some(k => k in body))
     return resp(400, { error: `Provide at least one of: ${allowed.join(", ")}` });
 
@@ -88,6 +89,9 @@ const updateSite = async (siteId, body) => {
     } else {
       parts.push("REMOVE slack_webhook");
     }
+  }
+  if ("order_no" in body) {
+    names["#on"] = "order_no"; vals[":on"] = Number(body.order_no ?? 999); parts.push("#on = :on");
   }
 
   try {
