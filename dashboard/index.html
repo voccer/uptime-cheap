@@ -413,6 +413,32 @@
     }
     .refresh-selector select:focus { border-color: var(--accent); }
 
+    /* ─── Edit Modal ──────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 24px; min-width: 320px; max-width: 90vw;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .modal-card h3 { margin: 0 0 16px; font-size: 16px; }
+    .modal-card label {
+      display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px;
+    }
+    .modal-card input, .modal-card select {
+      width: 100%; padding: 8px 12px; margin-bottom: 12px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text); font-size: 14px; box-sizing: border-box;
+    }
+    .modal-card input:focus, .modal-card select:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .btn-save { padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .btn-cancel { padding: 8px 16px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 14px; }
+
     /* ─── Responsive ─────────────────────────────── */
     @media (max-width: 768px) {
       body {
@@ -523,6 +549,7 @@
         <option value="300000">5m</option>
       </select>
     </div>
+    <button class="btn-link" id="btn-refresh-now" onclick="refreshNow()" title="Refresh now">↻ Refresh</button>
     <span id="header-nav"></span>
   </div>
 </header>
@@ -669,6 +696,7 @@
 
     const controls = showControls ? `
       <button class="btn-pause" onclick="togglePause('${site.site_id}', ${isPaused})">${isPaused ? '▶ Resume' : '⏸ Pause'}</button>
+      <button class="btn-edit" onclick="openEditModal('${site.site_id}')" title="Edit">✏️</button>
       <button class="btn-del"   onclick="delSite('${site.site_id}')" title="Remove">✕</button>
     ` : '';
 
@@ -908,6 +936,67 @@
     await loadAdmin();
     startAutoRefresh(loadAdmin);
   };
+
+  // ── Edit modal ───────────────────────────────────
+  let editSiteId = null;
+  const openEditModal = site => {
+    editSiteId = site.site_id;
+    $('edit-name').value = site.name;
+    $('edit-url').value = site.url;
+    $('edit-webhook').value = site.slack_webhook || '';
+    $('edit-interval').value = site.check_interval_minutes || 1;
+    $('edit-modal').classList.remove('hidden');
+  };
+  const closeEditModal = () => {
+    $('edit-modal').classList.add('hidden');
+    editSiteId = null;
+  };
+  const saveEdit = async () => {
+    if (!editSiteId) return;
+    const name     = $('edit-name').value.trim();
+    const url      = $('edit-url').value.trim();
+    const webhook  = $('edit-webhook').value.trim();
+    const interval = parseInt($('edit-interval').value, 10);
+    if (!name || !url) return;
+
+    const body = { name, url, check_interval_minutes: interval };
+    if (webhook) body.slack_webhook = webhook;
+    else body.slack_webhook = null;  // allow clearing webhook
+
+    await api(`/sites/${editSiteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    closeEditModal();
+    await loadAdmin();
+    startAutoRefresh(loadAdmin);
+  };
 </script>
+<div id="edit-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3>Edit Monitor</h3>
+    <label>Name</label>
+    <input id="edit-name" type="text" placeholder="Name" />
+    <label>URL</label>
+    <input id="edit-url" type="text" placeholder="https://example.com" />
+    <label>Slack Webhook URL (optional)</label>
+    <input id="edit-webhook" type="text" placeholder="https://hooks.slack.com/..." />
+    <label>Check Interval</label>
+    <select id="edit-interval">
+      <option value="1">Every 1 min</option>
+      <option value="2">Every 2 min</option>
+      <option value="5">Every 5 min</option>
+      <option value="10">Every 10 min</option>
+      <option value="15">Every 15 min</option>
+      <option value="30">Every 30 min</option>
+      <option value="60">Every 60 min</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
