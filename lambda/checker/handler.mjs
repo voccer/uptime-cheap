@@ -83,6 +83,7 @@ const updateState = async (site, ok) => {
     UpdateExpression: expr,
     ExpressionAttributeValues: vals,
     ExpressionAttributeNames: { "#st": "status" },
+    ConditionExpression: "attribute_exists(site_id)",
   }));
 
   site.status = newStatus;
