@@ -216,7 +216,7 @@ terraform destroy
 ## File Structure
 
 ```
-pionero-services/
+uptime-cheap/
 ├── dashboard/
 │   └── index.html          # Static dashboard (vanilla JS)
 ├── lambda/
