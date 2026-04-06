@@ -13,7 +13,6 @@
       "Bash(curl -s \"http://site-monitor-dashboard-677930909572.s3-website-ap-northeast-1.amazonaws.com\")",
       "Bash(make deploy:*)",
       "Bash(rm -rf .terraform.lock.hcl .terraform terraform.tfstate terraform.tfstate.backup)",
-      "Bash(export AWS_PROFILE=pionero)",
       "Bash(terraform init:*)",
       "Bash(terraform plan:*)",
       "Bash(terraform apply:*)",
