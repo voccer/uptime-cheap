@@ -99,34 +99,55 @@ terraform version
 ### 2. Clone & Configure
 
 ```bash
-git clone https://github.com/your-org/pionero-services.git
-cd pionero-services/terraform
+git clone https://github.com/voccer/uptime-cheap
+cd uptime-cheap/terraform
 ```
 
 Copy and edit the variables file:
 ```bash
-cp main.tfvars main.tfvars.local
+cp main.tfvars.example main.tfvars
 ```
 
-Edit `main.tfvars.local` with your values:
+> **Note:** `main.tfvars` is gitignored — your secrets will not be committed.
+
+Edit `main.tfvars` with your values:
+
 ```hcl
-project_name      = "my-monitor"
-slack_webhook_url = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-admin_token       = "your-secure-random-token-here"
-aws_region        = "ap-northeast-1"  # or your preferred region
-beats_ttl_seconds = 604800            # 7 days
+# Project prefix — used for all AWS resource names
+# Example: "my-monitor" creates my-monitor-sites, my-monitor-api, etc.
+project_name = "my-uptime-monitor"
+
+# AWS region (must exist in your account)
+# Examples: ap-northeast-1 (Tokyo), us-east-1 (Virginia), eu-west-1 (Ireland)
+aws_region = "ap-northeast-1"
+
+# Slack incoming webhook URL
+# Create at: https://api.slack.com/apps > Incoming Webhooks
+# Leave empty "" to disable Slack alerts
+slack_webhook_url = "https://hooks.slack.com/services/T00XXXXXX/B00XXXXXX/XXXXXXXXXXXX"
+
+# Admin token — protects write operations (add/edit/delete sites)
+# Generate with: openssl rand -base64 24
+admin_token = "your-secure-random-token"
+
+# Beat history retention in seconds
+# 604800 = 7 days | 43200 = 12 hours | 7200 = 2 hours
+beats_ttl_seconds = 604800
 ```
 
-### 3. Deploy
+## Deployment
 
 ```bash
-make deploy
-```
-
-Or manually:
-```bash
+cd terraform
 terraform init
-terraform apply -var-file="main.tfvars.local"
+terraform apply
+```
+
+The first run will ask for the variable values. To skip the prompt, create `main.tfvars` as described above — Terraform reads it automatically.
+
+To destroy all resources:
+```bash
+terraform destroy
 ```
 
 ## Usage
@@ -189,12 +210,7 @@ At ~$5/month VPS cost for UptimeKuma, this solution pays for itself in the first
 ## Cleanup
 
 ```bash
-make destroy
-```
-
-Or:
-```bash
-terraform destroy -var-file="main.tfvars.local"
+terraform destroy
 ```
 
 ## File Structure
