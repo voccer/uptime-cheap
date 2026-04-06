@@ -49,4 +49,4 @@ EventBridge (rate 1 min) → Lambda Checker → DynamoDB + Slack webhook
 - Modules: `storage` (DynamoDB), `compute` (Lambda), `api` (API Gateway), `dashboard` (S3)
 - API Gateway uses HTTP API (not REST) with `$default` catch-all route
 - Lambda timeout: checker=65s, api=10s
-- Required variables: `project_name`, `slack_webhook_url`, `admin_token` (see `main.tfvars`)
+- Required variables: `project_name`, `slack_webhook_url`, `admin_token` (see `main.tfvars.example`) - file is gitignored, copy to `main.tfvars` before use
